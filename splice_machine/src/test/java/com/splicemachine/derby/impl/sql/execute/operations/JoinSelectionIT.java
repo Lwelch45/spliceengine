@@ -50,6 +50,8 @@ public class JoinSelectionIT extends SpliceUnitTest  {
     public static final SpliceTableWatcher spliceTableWatcher = new SpliceTableWatcher("PERSON",CLASS_NAME,"(pid int NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), i int)");
     public static final SpliceTableWatcher spliceTableWatcher2 = new SpliceTableWatcher("RP_BC_14_1",CLASS_NAME,"(pid int NOT NULL GENERATED ALWAYS AS IDENTITY (START WITH 1, INCREMENT BY 1), i int)");
     public static final SpliceTableWatcher spliceTableWatcher3 = new SpliceTableWatcher("T",CLASS_NAME,"(i int)");
+    public static final SpliceTableWatcher spliceTableWatcher4 = new SpliceTableWatcher("A",CLASS_NAME,"(i int,j int)");
+    public static final SpliceTableWatcher spliceTableWatcher5 = new SpliceTableWatcher("B",CLASS_NAME,"(i int,j int)");
     public static final SpliceTableWatcher spliceTableRegion = new SpliceTableWatcher("REGION2",CLASS_NAME,
     	"(R_REGIONKEY INTEGER NOT NULL PRIMARY KEY, R_NAME VARCHAR(25))");
     public static final SpliceTableWatcher spliceTableNation = new SpliceTableWatcher("NATION2",CLASS_NAME,
@@ -68,6 +70,8 @@ public class JoinSelectionIT extends SpliceUnitTest  {
             .around(spliceTableWatcher)
             .around(spliceTableWatcher2)
             .around(spliceTableWatcher3)
+            .around(spliceTableWatcher4)
+            .around(spliceTableWatcher5)
             .around(spliceTableRegion)
             .around(spliceTableNation)
             .around(new SpliceDataWatcher() {
@@ -403,5 +407,44 @@ public class JoinSelectionIT extends SpliceUnitTest  {
                 format("explain select * from %s t1 left join %s t2 on t1.i=t2.i",
                         spliceTableWatcher3, spliceTableWatcher3),
                 LO_BROADCAST_JOIN, methodWatcher);
+    }
+
+    @Test
+    public void testRepetivePredicate() throws Exception {
+
+        // predicates that repeat in all sub-clauses are all extracted as hashable join predicates
+        thirdRowContainsQuery(
+                format("explain select * from %s, %s where (a.i = b.i and a.j=1) or (a.i = b.i and a.j=2)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                BROADCAST_JOIN, methodWatcher);
+
+        thirdRowContainsQuery(
+                format("explain select * from %s, %s where (a.i = b.i and a.j=1 and a.j=b.j) or (a.i = b.i and a.j=2 and a.j=b.j)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                BROADCAST_JOIN, methodWatcher);
+
+        // Negative test: predicate does not repeat in all clauses
+        thirdRowContainsQuery(
+                format("explain select * from %s, %s where (a.i = b.i and a.j=1) or (a.i = b.i and a.j=2) or (b.j=1)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                NESTED_LOOP_JOIN, methodWatcher);
+
+        thirdRowContainsQuery(
+                format("explain select * from a, b where (a.i = b.i and a.j=1) or (a.i = b.i+1 and a.j=2)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                NESTED_LOOP_JOIN, methodWatcher);
+
+        // Negative test: predicate is under a NOT node
+        thirdRowContainsQuery(
+                format("explain select * from a, b where (a.i = b.i and a.j=1) or (not(a.i = b.i) and a.j=2)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                NESTED_LOOP_JOIN, methodWatcher);
+
+        // Negative test: Clause is not in a DNF form and not subject to optimization
+        thirdRowContainsQuery(
+                format("explain select * from %s, %s where (a.i = b.i and a.j=1) or ((a.i = b.i or a.j=2) and a.i=1)",
+                        spliceTableWatcher4, spliceTableWatcher5),
+                NESTED_LOOP_JOIN, methodWatcher);
+
     }
 }
