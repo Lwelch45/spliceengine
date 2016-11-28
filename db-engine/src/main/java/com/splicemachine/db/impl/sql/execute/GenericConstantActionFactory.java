@@ -304,21 +304,22 @@ public abstract class GenericConstantActionFactory {
 	 */
 	public abstract	ConstantAction	getCreateTableConstantAction
 	(
-		String			schemaName,
-		String			tableName,
-		int				tableType,
-		ColumnInfo[]	columnInfo,
-		ConstantAction[] constraintActions,
-		Properties		properties,
-		char			lockGranularity,
-		boolean			onCommitDeleteRows,
-		boolean			onRollbackDeleteRows,
-        String          withDataQueryString,
-		String delimited,
-		String escaped,
-		String lines,
-		String storedAs,
-		String location
+			String			schemaName,
+			String			tableName,
+			int				tableType,
+			ColumnInfo[]	columnInfo,
+			ConstantAction[] constraintActions,
+			Properties		properties,
+			char			lockGranularity,
+			boolean			onCommitDeleteRows,
+			boolean			onRollbackDeleteRows,
+			String          withDataQueryString,
+			boolean isExternal,
+			String delimited,
+			String escaped,
+			String lines,
+			String storedAs,
+			String location
 		);
 
 	public abstract	ConstantAction	getPinTableConstantAction (

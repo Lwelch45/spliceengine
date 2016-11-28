@@ -50,6 +50,7 @@ public class SpliceCreateTableOperation extends CreateTableConstantOperation {
 	private final String schemaName;
 	private final String withDataQueryString;
 
+
 	/**
 	 * Make the ConstantAction for a CREATE TABLE statement.
 	 *
@@ -77,12 +78,13 @@ public class SpliceCreateTableOperation extends CreateTableConstantOperation {
 									  boolean onCommitDeleteRows,
 									  boolean onRollbackDeleteRows,
 									  String withDataQueryString,
+									  boolean isExternal,
 									  String delimited,
 									  String escaped,
 									  String lines,
 									  String storedAs,
 									  String location) {
-		super(schemaName, tableName, tableType, columnInfo, constraintActions, properties, lockGranularity, onCommitDeleteRows, onRollbackDeleteRows,
+		super(schemaName, tableName, tableType, columnInfo, constraintActions, properties, lockGranularity, onCommitDeleteRows, onRollbackDeleteRows, isExternal,
 				delimited,
 				escaped,
 				lines,
@@ -93,6 +95,7 @@ public class SpliceCreateTableOperation extends CreateTableConstantOperation {
 		this.tableName = tableName;
 		this.schemaName = schemaName;
 		this.withDataQueryString = withDataQueryString;
+
 	}
 
 	@Override
